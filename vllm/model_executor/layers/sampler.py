@@ -254,6 +254,25 @@ def _greedy_sample(
     return results
 
 
+def _deterministic_sample(
+    selected_seq_groups: List[Tuple[List[int], SamplingParams]],
+    samples: torch.Tensor,
+) -> List[Tuple[List[int], List[int]]]:
+    samples = samples.tolist()
+    sample_idx = 0
+    results = []
+    for seq_group in selected_seq_groups:
+        seq_ids, _ = seq_group
+        num_parent_seqs = len(seq_ids)
+        assert num_parent_seqs == 1, (
+            "Deterministic sampling should have only one seq.")
+        parent_ids = list(range(num_parent_seqs))
+        next_token_ids = [samples[sample_idx]]
+        results.append((next_token_ids, parent_ids))
+        sample_idx += num_parent_seqs
+    return results
+
+
 def _random_sample(
     selected_seq_groups: List[Tuple[List[int], SamplingParams]],
     is_prompts: List[bool],
@@ -405,7 +424,10 @@ def _sample(
             continue
         seq_group_ids, seq_groups, is_prompts, sample_indices = sample_metadata[
             sampling_type]
-        if sampling_type == SamplingType.GREEDY:
+
+        if sampling_type == SamplingType.DETERMINISTIC:
+            sample_results = _deterministic_sample(seq_groups, greedy_samples)
+        elif sampling_type == SamplingType.GREEDY:
             sample_results = _greedy_sample(seq_groups, greedy_samples)
         elif sampling_type == SamplingType.RANDOM:
             sample_results = _random_sample(seq_groups, is_prompts,

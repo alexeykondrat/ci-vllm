@@ -12,7 +12,7 @@ class SamplingType(IntEnum):
     GREEDY = 0
     RANDOM = 1
     BEAM = 2
-
+    DETERMINISTIC = 3
 
 LogitsProcessor = Callable[[List[int], torch.Tensor], torch.Tensor]
 """LogitsProcessor is a function that takes a list of previously generated
@@ -56,6 +56,8 @@ class SamplingParams:
         min_p: Float that represents the minimum probability for a token to be
             considered, relative to the probability of the most likely token.
             Must be in [0, 1]. Set to 0 to disable this.
+        ppl_measurement: Measure perplexity towards the deterministic string 
+            instead of probabilistic regressing.
         use_beam_search: Whether to use beam search instead of sampling.
         length_penalty: Float that penalizes sequences based on their length.
             Used in beam search.
@@ -101,6 +103,7 @@ class SamplingParams:
         top_p: float = 1.0,
         top_k: int = -1,
         min_p: float = 0.0,
+        ppl_measurement: bool = False,
         use_beam_search: bool = False,
         length_penalty: float = 1.0,
         early_stopping: Union[bool, str] = False,
@@ -124,6 +127,7 @@ class SamplingParams:
         self.top_p = top_p
         self.top_k = top_k
         self.min_p = min_p
+        self.ppl_measurement = ppl_measurement
         self.use_beam_search = use_beam_search
         self.length_penalty = length_penalty
         self.early_stopping = early_stopping
@@ -225,6 +229,8 @@ class SamplingParams:
 
     @cached_property
     def sampling_type(self) -> SamplingType:
+        if self.ppl_measurement:
+            return SamplingType.DETERMINISTIC
         if self.use_beam_search:
             return SamplingType.BEAM
         if self.temperature < _SAMPLING_EPS:
