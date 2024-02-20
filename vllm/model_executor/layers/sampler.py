@@ -402,7 +402,10 @@ def _sample(
         is_prompts = [i < sampling_metadata.num_prompts for i in seq_group_ids]
         sample_metadata[sampling_type] = (seq_group_ids, seq_groups,
                                           is_prompts, sample_indices)
-        if sampling_type == SamplingType.GREEDY:
+
+        if sampling_type == SamplingType.DETERMINISTIC:
+            deterministic_samples = torch.argmax(logprobs[sample_indices], dim=-1)
+        elif sampling_type == SamplingType.GREEDY:
             greedy_samples = torch.argmax(logprobs[sample_indices], dim=-1)
         elif sampling_type == SamplingType.RANDOM:
             max_best_of = 1
@@ -426,7 +429,7 @@ def _sample(
             sampling_type]
 
         if sampling_type == SamplingType.DETERMINISTIC:
-            sample_results = _deterministic_sample(seq_groups, greedy_samples)
+            sample_results = _deterministic_sample(seq_groups, deterministic_samples)
         elif sampling_type == SamplingType.GREEDY:
             sample_results = _greedy_sample(seq_groups, greedy_samples)
         elif sampling_type == SamplingType.RANDOM:

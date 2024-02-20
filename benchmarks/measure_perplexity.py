@@ -41,8 +41,11 @@ def main(args: argparse.Namespace):
     outputs = llm.generate(prompts, sampling_params)
     for output in outputs:
         prompt = output.prompt
+        num_outputs = len(output.outputs)
         generated_text = output.outputs[0].text
-        print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
+        num_tokens = len(output.outputs[0].token_ids)
+        ppl = pow(2,output.outputs[0].cumulative_logprob/num_tokens)
+        print(f"Prompt: {prompt!r},\nGenerated text: {generated_text!r},\nPPL: {ppl:.4f} bit/token over {num_tokens} tokens in the first output of {num_outputs}.")
 
 
 
@@ -65,7 +68,7 @@ if __name__ == '__main__':
                         type=int,
                         default=1,
                         help='Number of generated sequences per prompt.')
-    parser.add_argument('--ppl-measurement', action='store_false')
+    parser.add_argument('--ppl-measurement', action='store_true')
     parser.add_argument('--use-beam-search', action='store_true')
     parser.add_argument('--num-iters',
                         type=int,
