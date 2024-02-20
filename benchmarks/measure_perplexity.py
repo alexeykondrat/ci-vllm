@@ -27,18 +27,22 @@ def main(args: argparse.Namespace):
         n=args.n,
         temperature=0.0 if args.use_beam_search else 1.0,
         top_p=1.0,
+        ppl_measurement=args.ppl_measurement,
         use_beam_search=args.use_beam_search,
         ignore_eos=True,
-        max_tokens=args.output_len,
+        max_tokens=args.output_len, # max_tokens shouldn't have any effect as in the "ppl_measurement" mode we run the end of the reference token sequence
     )
     print(sampling_params)
 
     with open(args.test_set,'r') as file:
-      prompts = [] 
+      prompts = []
+      my_prefix_pos = []
       for line in file:
-        if line!="\n": prompts.append(line.strip())
-
-    outputs = llm.generate(prompts, sampling_params)
+        if line!="\n": 
+            prompts.append(line.strip())
+            my_prefix_pos.append(args.input_len)
+    
+    outputs = llm.generate(prompts, sampling_params, prefix_pos=my_prefix_pos)
     for output in outputs:
         prompt = output.prompt
         num_outputs = len(output.outputs)
