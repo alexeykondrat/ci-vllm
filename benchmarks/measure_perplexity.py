@@ -48,10 +48,10 @@ def main(args: argparse.Namespace):
         num_outputs = len(output.outputs)
         generated_text = output.outputs[0].text
         num_tokens = len(output.outputs[0].token_ids)
-        ppl = pow(2,output.outputs[0].cumulative_logprob/num_tokens)
+        ppl = float('nan')
+        if num_tokens!=0:
+            ppl = pow(2,output.outputs[0].cumulative_logprob/num_tokens)
         print(f"Prompt: {prompt!r},\nGenerated text: {generated_text!r},\nPPL: {ppl:.4f} bit/token over {num_tokens} tokens in the first output of {num_outputs}.")
-
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
