@@ -1,6 +1,23 @@
 #!/usr/bin/env python3
 
-"""Measure Perplexity for a given Model towards a given TestSet of texts."""
+"""
+    For a given LLM sample solutions to the "human-eval" set of problems.
+    Arguments: Beside typical vLLM arguments this script accepts
+            --num-samples-per-task - an integer number of samples to extract
+                                     per task
+            --experiment-prefix -  a string to aggregate separate parallel
+                                    experiments
+            
+
+    Output: two files   {experiment-prefix}_problems.jsonl
+                        {experiment-prefix}_solutions.jsonl
+            which are subsequently to be scored by the standard means of the
+            "human-eval" dataset. E.g.:
+            python evaluate_functional_correctness.py 
+                {experiment-prefix}_solutions.jsonl 
+                --problem_file={experiment-prefix}_problems.jsonl
+"""
+
 from human_eval.data import write_jsonl, read_problems
 
 import argparse
@@ -32,7 +49,7 @@ def main(args: argparse.Namespace):
 
     sampling_params = SamplingParams(
         n=args.n,
-        temperature=0.0 if args.use_beam_search else 1.0,
+        temperature=1.0,# if args.use_beam_search else 1.0,
         top_p=1.0,
         use_beam_search=args.use_beam_search,
         ignore_eos=True,
@@ -40,45 +57,36 @@ def main(args: argparse.Namespace):
     )
     print(sampling_params)
 
-    with open(args.test_set,'r') as file:
-      prompts = [] 
-      for line in file:
-        if line!="\n": prompts.append(line.strip())
-    
     problems = read_problems()
-
-    #num_samples_per_task = 2
-    #samples = [
-    #    dict(task_id=task_id, completion=llm.generate(problems[task_id]["prompt"],sampling_params))
-    #    for task_id in problems
-    #    for _ in range(num_samples_per_task)
-    #]
-    #write_jsonl("samples.jsonl", samples)
-
-    #prompts=problems['HumanEval/0']['prompt']
-
-    #print(prompts)
-    #print("###")
-    #print(repr(prompts))
-
+    
+    #Intermediate debugging ops
+    #task_list=['HumanEval/0','HumanEval/1','HumanEval/2','HumanEval/3','HumanEval/4']
+    #write_jsonl("./"+args.experiment_prefix+"_problems.jsonl", {k: problems[k] for k in task_list})
+    
+    num_samples_per_task = args.num_samples_per_task
+    
     print (f"### Starting generation @ {datetime.datetime.now()}")
 
-    outputs = llm.generate(prompts, sampling_params)
-    for output in outputs:
-        prompt = output.prompt
-        generated_text = output.outputs[0].text
-        print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
-
+    samples = [
+        dict(task_id=task_id, completion=llm.generate(problems[task_id]["prompt"],sampling_params))
+        for task_id in problems
+        for _ in range(num_samples_per_task)
+    ]
 
     print (f"### Done @ {datetime.datetime.now()}")
+    
+    for sample in samples:
+        sample['completion']=sample['completion'][0].outputs[0].text
 
+    write_jsonl("./"+args.experiment_prefix+"_solutions.jsonl", samples)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Benchmark the latency of processing a single batch of '
         'requests till completion.')
     parser.add_argument('--model', type=str, default='facebook/opt-125m')
-    parser.add_argument('--test-set', type=str, default='./test.prompts')
+    parser.add_argument('--num-samples-per-task', type=int, default=1)
+    parser.add_argument('--experiment-prefix',type=str, default='solution_samples')
     parser.add_argument('--tokenizer', type=str, default=None)
     parser.add_argument('--quantization',
                         '-q',
