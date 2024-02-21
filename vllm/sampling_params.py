@@ -12,7 +12,7 @@ class SamplingType(IntEnum):
     GREEDY = 0
     RANDOM = 1
     BEAM = 2
-    DETERMINISTIC = 3
+    DETERMINISTIC = 4
 
 LogitsProcessor = Callable[[List[int], torch.Tensor], torch.Tensor]
 """LogitsProcessor is a function that takes a list of previously generated
