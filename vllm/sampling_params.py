@@ -11,7 +11,7 @@ _SAMPLING_EPS = 1e-5
 class SamplingType(IntEnum):
     GREEDY = 0
     RANDOM = 1
-    BEAM = 2
+    BEAM = 3
     DETERMINISTIC = 4
 
 LogitsProcessor = Callable[[List[int], torch.Tensor], torch.Tensor]
