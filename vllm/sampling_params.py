@@ -11,9 +11,11 @@ _SAMPLING_EPS = 1e-5
 class SamplingType(IntEnum):
     GREEDY = 0
     RANDOM = 1
+    RANDOM_SEED = 2
     BEAM = 3
     DETERMINISTIC = 4
 
+    
 LogitsProcessor = Callable[[List[int], torch.Tensor], torch.Tensor]
 """LogitsProcessor is a function that takes a list of previously generated
 tokens and a tensor of the logits for the next token, and returns a modified
@@ -58,6 +60,7 @@ class SamplingParams:
             Must be in [0, 1]. Set to 0 to disable this.
         ppl_measurement: Measure perplexity towards the deterministic string 
             instead of probabilistic regressing.
+        seed: Random seed to use for the generation.
         use_beam_search: Whether to use beam search instead of sampling.
         length_penalty: Float that penalizes sequences based on their length.
             Used in beam search.
@@ -104,6 +107,7 @@ class SamplingParams:
         top_k: int = -1,
         min_p: float = 0.0,
         ppl_measurement: bool = False,
+        seed: Optional[int] = None,
         use_beam_search: bool = False,
         length_penalty: float = 1.0,
         early_stopping: Union[bool, str] = False,
@@ -128,6 +132,7 @@ class SamplingParams:
         self.top_k = top_k
         self.min_p = min_p
         self.ppl_measurement = ppl_measurement
+        self.seed = seed
         self.use_beam_search = use_beam_search
         self.length_penalty = length_penalty
         self.early_stopping = early_stopping
@@ -235,6 +240,8 @@ class SamplingParams:
             return SamplingType.BEAM
         if self.temperature < _SAMPLING_EPS:
             return SamplingType.GREEDY
+        if self.seed is not None:
+            return SamplingType.RANDOM_SEED
         return SamplingType.RANDOM
 
     def __repr__(self) -> str:
@@ -249,6 +256,7 @@ class SamplingParams:
             f"top_k={self.top_k}, "
             f"min_p={self.min_p}, "
             f"ppl_measurement={self.ppl_measurement}, "
+            f"seed={self.seed}, "
             f"use_beam_search={self.use_beam_search}, "
             f"length_penalty={self.length_penalty}, "
             f"early_stopping={self.early_stopping}, "
