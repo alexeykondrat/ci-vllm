@@ -63,6 +63,8 @@ def main(args: argparse.Namespace):
     #task_list=['HumanEval/0','HumanEval/1','HumanEval/2','HumanEval/3','HumanEval/4']
     #write_jsonl("./"+args.experiment_prefix+"_problems.jsonl", {k: problems[k] for k in task_list})
     
+    write_jsonl("./"+args.experiment_prefix+"_problems.jsonl", {k: problems[k] for k in problems})
+    
     num_samples_per_task = args.num_samples_per_task
     
     print (f"### Starting generation @ {datetime.datetime.now()}")
@@ -146,7 +148,4 @@ if __name__ == '__main__':
         help='device type for vLLM execution, supporting CUDA only currently.')
     args = parser.parse_args()
     main(args)
-
-
-
 
