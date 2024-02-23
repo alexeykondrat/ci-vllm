@@ -73,18 +73,18 @@ def main(args: argparse.Namespace):
     
     print (f"### Starting generation @ {datetime.datetime.now()}")
 
-    #samples = [   
-    #    dict(task_id=task_id, completion=llm.generate(problems[task_id]["prompt"],sampling_params))
-    #    for task_id in problems
-    #    for _ in range(num_samples_per_task)
-    #]
+    samples = [   
+        dict(task_id=task_id, completion=llm.generate(problems[task_id]["prompt"],sampling_params))
+        for task_id in problems
+        for _ in range(num_samples_per_task)
+    ]
 
     print (f"### Done @ {datetime.datetime.now()}")
     
-    #for sample in samples:
-    #    sample['completion']=sample['completion'][0].outputs[0].text
+    for sample in samples:
+        sample['completion']=sample['completion'][0].outputs[0].text
 
-    #write_jsonl("./"+args.experiment_prefix+"_solutions.jsonl", samples)
+    write_jsonl("./"+args.experiment_prefix+"_solutions.jsonl", samples)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
