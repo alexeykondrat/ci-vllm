@@ -19,6 +19,7 @@
 """
 
 from human_eval.data import write_jsonl, read_problems
+import json
 
 import argparse
 import datetime
@@ -63,24 +64,27 @@ def main(args: argparse.Namespace):
     #task_list=['HumanEval/0','HumanEval/1','HumanEval/2','HumanEval/3','HumanEval/4']
     #write_jsonl("./"+args.experiment_prefix+"_problems.jsonl", {k: problems[k] for k in task_list})
     
-    write_jsonl("./"+args.experiment_prefix+"_problems.jsonl", {k: problems[k] for k in problems})
+    with open("./"+args.experiment_prefix+"_problems.jsonl", "w") as f:
+        for task_id in problems:
+            f.write(json.dumps(problems[task_id]))
+
     
     num_samples_per_task = args.num_samples_per_task
     
     print (f"### Starting generation @ {datetime.datetime.now()}")
 
-    samples = [
-        dict(task_id=task_id, completion=llm.generate(problems[task_id]["prompt"],sampling_params))
-        for task_id in problems
-        for _ in range(num_samples_per_task)
-    ]
+    #samples = [   
+    #    dict(task_id=task_id, completion=llm.generate(problems[task_id]["prompt"],sampling_params))
+    #    for task_id in problems
+    #    for _ in range(num_samples_per_task)
+    #]
 
     print (f"### Done @ {datetime.datetime.now()}")
     
-    for sample in samples:
-        sample['completion']=sample['completion'][0].outputs[0].text
+    #for sample in samples:
+    #    sample['completion']=sample['completion'][0].outputs[0].text
 
-    write_jsonl("./"+args.experiment_prefix+"_solutions.jsonl", samples)
+    #write_jsonl("./"+args.experiment_prefix+"_solutions.jsonl", samples)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
