@@ -66,7 +66,7 @@ def main(args: argparse.Namespace):
     
     with open("./"+args.experiment_prefix+"_problems.jsonl", "w") as f:
         for task_id in problems:
-            f.write(json.dumps(problems[task_id]))
+            f.write(json.dumps(problems[task_id])+'\n')
 
     
     num_samples_per_task = args.num_samples_per_task
