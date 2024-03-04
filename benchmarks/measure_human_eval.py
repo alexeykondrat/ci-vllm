@@ -50,22 +50,17 @@ def main(args: argparse.Namespace):
     llm = LLM(
         model=args.model,
         tokenizer=args.tokenizer,
-	#quantization=args.quantization,
         tensor_parallel_size=args.tensor_parallel_size,
         trust_remote_code=args.trust_remote_code,
         dtype=args.dtype,
-	#enforce_eager=args.enforce_eager,
-	#kv_cache_dtype=args.kv_cache_dtype,
-	#device=args.device,
-        kv_cache_dtype=args.kv_cache_dtype, #"fp8"
-        kv_cache_scales_path=args.kv_cache_scales_path if args.kv_cache_scales_path!='' else None, #"/data/models/WizardCoder-34B/kv_cache_scales.json"
+        kv_cache_dtype=args.kv_cache_dtype,
+        kv_cache_scales_path=args.kv_cache_scales_path if args.kv_cache_scales_path!='' else None,
     )
 
     sampling_params = SamplingParams(
         n=args.n,
         temperature=0.0 if args.use_beam_search else args.temperature,
         top_p=1,
-        #top_k=40,
         use_beam_search=args.use_beam_search,
         ignore_eos=True,
         max_tokens=args.output_len,
@@ -73,10 +68,6 @@ def main(args: argparse.Namespace):
     print(sampling_params)
 
     problems = read_problems()
-    
-    #Intermediate debugging ops
-    #task_list=['HumanEval/0','HumanEval/1','HumanEval/2','HumanEval/3','HumanEval/4']
-    #write_jsonl("./"+args.experiment_prefix+"_problems.jsonl", {k: problems[k] for k in task_list})
     
     with open("./"+args.experiment_prefix+"_problems.jsonl", "w") as f:
         for task_id in problems:
@@ -87,17 +78,8 @@ def main(args: argparse.Namespace):
     
     print (f"### Starting generation @ {datetime.datetime.now()}")
 
-    #samples = [   
-    #    dict(task_id=task_id, completion=llm.generate(problems[task_id]["prompt"],sampling_params))
-    #    for task_id in problems
-    #    for _ in range(num_samples_per_task)
-    #]
-    #instr_prefix="Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n### Instruction:\n"
-    #instr_suffix="\n\n### Response:"
-
     with open("./"+args.experiment_prefix+"_solutions.jsonl", "w") as f:
         for task_id in problems:
-            #one_completion = llm.generate(instr_prefix+problems[task_id]["prompt"]+instr_suffix,sampling_params)[0]
             one_completion = llm.generate(generate_prompt(problems[task_id]["prompt"]),sampling_params)[0]
             for i in range(args.n):
                 myanswer = one_completion.outputs[i].text
@@ -127,10 +109,6 @@ def main(args: argparse.Namespace):
 
 print (f"### Done @ {datetime.datetime.now()}")
     
-    #for sample in samples:
-    #    sample['completion']=sample['completion'][0].outputs[0].text
-    #
-    #write_jsonl("./"+args.experiment_prefix+"_solutions.jsonl", samples)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
