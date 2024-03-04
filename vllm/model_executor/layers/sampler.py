@@ -423,7 +423,8 @@ def _sample(
                                           is_prompts, sample_indices)
 
         if sampling_type == SamplingType.DETERMINISTIC:
-            deterministic_samples = torch.argmax(logprobs[sample_indices], dim=-1)
+            deterministic_samples = torch.argmax(logprobs[sample_indices.long()],
+                                          dim=-1)
         elif sampling_type == SamplingType.GREEDY:
             greedy_samples = torch.argmax(logprobs[sample_indices.long()],
                                           dim=-1)
