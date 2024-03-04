@@ -27,6 +27,18 @@ import datetime
 from vllm import LLM, SamplingParams
 
 
+def generate_prompt(input):
+    INSTRUCTION = f"""Below is an instruction that describes a task. Write a response that appropriately completes the request.
+
+
+### Instruction:
+Create a Python script for this problem:
+{input}
+
+### Response:"""
+    return INSTRUCTION
+
+
 def main(args: argparse.Namespace):
 
     print (f"### Initialising @ {datetime.datetime.now()}")
@@ -45,13 +57,15 @@ def main(args: argparse.Namespace):
 	#enforce_eager=args.enforce_eager,
 	#kv_cache_dtype=args.kv_cache_dtype,
 	#device=args.device,
-
+        kv_cache_dtype=args.kv_cache_dtype, #"fp8"
+        kv_cache_scales_path=args.kv_cache_scales_path if args.kv_cache_scales_path!='' else None, #"/data/models/WizardCoder-34B/kv_cache_scales.json"
     )
 
     sampling_params = SamplingParams(
         n=args.n,
-        temperature=1.0,# if args.use_beam_search else 1.0,
-        top_p=1.0,
+        temperature=0.0 if args.use_beam_search else args.temperature,
+        top_p=1,
+        #top_k=40,
         use_beam_search=args.use_beam_search,
         ignore_eos=True,
         max_tokens=args.output_len,
@@ -73,25 +87,59 @@ def main(args: argparse.Namespace):
     
     print (f"### Starting generation @ {datetime.datetime.now()}")
 
-    samples = [   
-        dict(task_id=task_id, completion=llm.generate(problems[task_id]["prompt"],sampling_params))
-        for task_id in problems
-        for _ in range(num_samples_per_task)
-    ]
+    #samples = [   
+    #    dict(task_id=task_id, completion=llm.generate(problems[task_id]["prompt"],sampling_params))
+    #    for task_id in problems
+    #    for _ in range(num_samples_per_task)
+    #]
+    #instr_prefix="Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n### Instruction:\n"
+    #instr_suffix="\n\n### Response:"
 
-    print (f"### Done @ {datetime.datetime.now()}")
+    with open("./"+args.experiment_prefix+"_solutions.jsonl", "w") as f:
+        for task_id in problems:
+            #one_completion = llm.generate(instr_prefix+problems[task_id]["prompt"]+instr_suffix,sampling_params)[0]
+            one_completion = llm.generate(generate_prompt(problems[task_id]["prompt"]),sampling_params)[0]
+            for i in range(args.n):
+                myanswer = one_completion.outputs[i].text
+                myanswer = myanswer.replace("\r", "")
+                if '```python' in myanswer: 
+                    def_line = myanswer.index('```python')
+                    myanswer = myanswer[def_line:].strip()
+                    myanswer = myanswer.replace('```python', '')
+                    try:
+                        next_line = myanswer.index('```')
+                        myanswer = myanswer[:next_line].strip()
+                    except:
+                        pass
+
+                if "__name__ == \"__main__\"" in myanswer:
+                    next_line = myanswer.index('__name__ == "__main__"')
+                    myanswer = myanswer[:next_line].strip()
+                                                                
+                if "# Example usage" in myanswer:
+                    next_line = myanswer.index('# Example usage')
+                    myanswer = myanswer[:next_line].strip()
+
+                myanswer = '\n'.join([line for line in myanswer.splitlines() if not line.startswith("Here")])
+                
+                answer = dict(task_id=task_id, completion=myanswer)
+                f.write(json.dumps(answer)+'\n')
+
+print (f"### Done @ {datetime.datetime.now()}")
     
-    for sample in samples:
-        sample['completion']=sample['completion'][0].outputs[0].text
-
-    write_jsonl("./"+args.experiment_prefix+"_solutions.jsonl", samples)
+    #for sample in samples:
+    #    sample['completion']=sample['completion'][0].outputs[0].text
+    #
+    #write_jsonl("./"+args.experiment_prefix+"_solutions.jsonl", samples)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Benchmark the latency of processing a single batch of '
         'requests till completion.')
     parser.add_argument('--model', type=str, default='facebook/opt-125m')
+    parser.add_argument('--kv-cache-scales-path', type=str, default='')
     parser.add_argument('--num-samples-per-task', type=int, default=1)
+    parser.add_argument('--temperature', type=float, default=1.0)
     parser.add_argument('--experiment-prefix',type=str, default='solution_samples')
     parser.add_argument('--tokenizer', type=str, default=None)
     parser.add_argument('--quantization',
@@ -130,7 +178,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--kv-cache-dtype",
         type=str,
-        choices=['auto', 'fp8_e5m2'],
+        choices=['auto', 'fp8_e5m2','fp8'],
         default='auto',
         help=
         'Data type for kv cache storage. If "auto", will use model data type.')
