@@ -27,7 +27,7 @@ def main(args: argparse.Namespace):
         n=args.n,
         temperature=0.0 if args.use_beam_search else 1.0,
         top_p=1.0,
-        ppl_measurement=args.ppl_measurement,
+        ppl_measurement=True,
         use_beam_search=args.use_beam_search,
         ignore_eos=True,
         max_tokens=args.output_len, # max_tokens shouldn't have any effect as in the "ppl_measurement" mode we run the end of the reference token sequence
@@ -72,7 +72,7 @@ if __name__ == '__main__':
                         type=int,
                         default=1,
                         help='Number of generated sequences per prompt.')
-    parser.add_argument('--ppl-measurement', action='store_true')
+    #parser.add_argument('--ppl-measurement', action='store_true')
     parser.add_argument('--use-beam-search', action='store_true')
     parser.add_argument('--num-iters',
                         type=int,
