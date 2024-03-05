@@ -454,7 +454,7 @@ def _sample(
             sampling_type]
 
         if sampling_type == SamplingType.FORCED:
-            sample_results = _forced_sample(seq_groups, deterministic_samples)
+            sample_results = _forced_sample(seq_groups, forced_samples)
         elif sampling_type == SamplingType.GREEDY:
             sample_results = _greedy_sample(seq_groups, greedy_samples)
         elif sampling_type in (SamplingType.RANDOM, SamplingType.RANDOM_SEED):
