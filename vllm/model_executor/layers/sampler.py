@@ -262,7 +262,7 @@ def _greedy_sample(
     return results
 
 
-def _deterministic_sample(
+def _forced_sample(
     selected_seq_groups: List[Tuple[List[int], SamplingParams]],
     samples: torch.Tensor,
 ) -> List[Tuple[List[int], List[int]]]:
@@ -422,8 +422,8 @@ def _sample(
         sample_metadata[sampling_type] = (seq_group_ids, seq_groups,
                                           is_prompts, sample_indices)
 
-        if sampling_type == SamplingType.DETERMINISTIC:
-            deterministic_samples = torch.argmax(logprobs[sample_indices.long()],
+        if sampling_type == SamplingType.FORCED:
+            forced_samples = torch.argmax(logprobs[sample_indices.long()],
                                           dim=-1)
         elif sampling_type == SamplingType.GREEDY:
             greedy_samples = torch.argmax(logprobs[sample_indices.long()],
@@ -453,8 +453,8 @@ def _sample(
         seq_group_ids, seq_groups, is_prompts, sample_indices = sample_metadata[
             sampling_type]
 
-        if sampling_type == SamplingType.DETERMINISTIC:
-            sample_results = _deterministic_sample(seq_groups, deterministic_samples)
+        if sampling_type == SamplingType.FORCED:
+            sample_results = _forced_sample(seq_groups, deterministic_samples)
         elif sampling_type == SamplingType.GREEDY:
             sample_results = _greedy_sample(seq_groups, greedy_samples)
         elif sampling_type in (SamplingType.RANDOM, SamplingType.RANDOM_SEED):

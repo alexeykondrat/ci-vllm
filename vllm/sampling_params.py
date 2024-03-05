@@ -14,7 +14,7 @@ class SamplingType(IntEnum):
     RANDOM = 1
     RANDOM_SEED = 2
     BEAM = 3
-    DETERMINISTIC = 4
+    FORCED = 4
 
     
 LogitsProcessor = Callable[[List[int], torch.Tensor], torch.Tensor]
@@ -236,7 +236,7 @@ class SamplingParams:
     @cached_property
     def sampling_type(self) -> SamplingType:
         if self.ppl_measurement:
-            return SamplingType.DETERMINISTIC
+            return SamplingType.FORCED
         if self.use_beam_search:
             return SamplingType.BEAM
         if self.temperature < _SAMPLING_EPS:

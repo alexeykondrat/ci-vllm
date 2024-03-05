@@ -51,7 +51,7 @@ def main(args: argparse.Namespace):
         ppl = float('nan')
         if num_tokens!=0:
             ppl = pow(2,output.outputs[0].cumulative_logprob/num_tokens)
-        print(f"Prompt: {prompt!r},\nGenerated text: {generated_text!r},\nPPL: {ppl:.4f} bit/token over {num_tokens} tokens in the first output of {num_outputs}.")
+        print(f"Prompt: {prompt!r},\nGenerated text: {generated_text!r},\n### PPL: {ppl:.4f} bit/token over {num_tokens} tokens in the first output of {num_outputs}.")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
