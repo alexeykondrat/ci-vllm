@@ -124,6 +124,7 @@ class LLM:
         prompts: Optional[Union[str, List[str]]] = None,
         sampling_params: Optional[SamplingParams] = None,
         prompt_token_ids: Optional[List[List[int]]] = None,
+        prefix_pos: Optional[List[int]] = None,
         use_tqdm: bool = True,
         lora_request: Optional[LoRARequest] = None,
     ) -> List[RequestOutput]:
