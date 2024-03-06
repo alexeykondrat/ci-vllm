@@ -423,8 +423,10 @@ def _sample(
                                           is_prompts, sample_indices)
 
         if sampling_type == SamplingType.FORCED:
-            forced_samples = torch.argmax(logprobs[sample_indices.long()],
-                                          dim=-1)
+            #forced_samples = torch.argmax(logprobs[sample_indices.long()],
+            #                              dim=-1)
+            forced_samples = torch.rand(logprobs[sample_indices.long()].size(0),
+                                          device='cuda:0')
         elif sampling_type == SamplingType.GREEDY:
             greedy_samples = torch.argmax(logprobs[sample_indices.long()],
                                           dim=-1)
