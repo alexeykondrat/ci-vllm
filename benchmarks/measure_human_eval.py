@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
 """
-    For a given LLM sample solutions to the "human-eval" set of problems.
-    Arguments: Beside typical vLLM arguments this script accepts
-            --num-samples-per-task - an integer number of samples to extract
-                                     per task
+    Measure LLM's correctness in generating functional Python code
+    for the standard ("human-eval") set of problems and evaluation method.
+    
+    Arguments: Besides typical vLLM arguments this script accepts
             --experiment-prefix -  a string to aggregate separate parallel
                                     experiments
-            
 
     Output: two files   {experiment-prefix}_problems.jsonl
                         {experiment-prefix}_solutions.jsonl
@@ -72,9 +71,6 @@ def main(args: argparse.Namespace):
     with open("./"+args.experiment_prefix+"_problems.jsonl", "w") as f:
         for task_id in problems:
             f.write(json.dumps(problems[task_id])+'\n')
-
-    
-    num_samples_per_task = args.num_samples_per_task
     
     print (f"### Starting generation @ {datetime.datetime.now()}")
 
@@ -108,7 +104,6 @@ def main(args: argparse.Namespace):
                 f.write(json.dumps(answer)+'\n')
 
 print (f"### Done @ {datetime.datetime.now()}")
-    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -116,7 +111,6 @@ if __name__ == '__main__':
         'requests till completion.')
     parser.add_argument('--model', type=str, default='facebook/opt-125m')
     parser.add_argument('--kv-cache-scales-path', type=str, default='')
-    parser.add_argument('--num-samples-per-task', type=int, default=1)
     parser.add_argument('--temperature', type=float, default=1.0)
     parser.add_argument('--experiment-prefix',type=str, default='solution_samples')
     parser.add_argument('--tokenizer', type=str, default=None)
@@ -132,7 +126,6 @@ if __name__ == '__main__':
                         type=int,
                         default=1,
                         help='Number of generated sequences per prompt.')
-    parser.add_argument('--ppl-measurement', action='store_false')
     parser.add_argument('--use-beam-search', action='store_true')
     parser.add_argument('--num-iters',
                         type=int,
