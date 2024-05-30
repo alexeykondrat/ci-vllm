@@ -15,6 +15,17 @@ from vllm.distributed import (broadcast_tensor_dict,
 from ..utils import (init_test_distributed_environment,
                      multi_process_tensor_parallel)
 
+def remove_visible_devices_env():
+    if not hasattr(torch.version, 'hip') or torch.version.hip is None:  # cuda
+        try:
+            del os.environ["CUDA_VISIBLE_DEVICES"]
+        except KeyError:
+            return
+    else: # rocm
+        try:
+            del os.environ["HIP_VISIBLE_DEVICES"]
+        except KeyError:
+            return
 
 @ray.remote(num_gpus=1, max_calls=1)
 def all_reduce_test_worker(tp_size: int, pp_size: int, rank: int,
@@ -22,7 +33,7 @@ def all_reduce_test_worker(tp_size: int, pp_size: int, rank: int,
     # it is important to delete the CUDA_VISIBLE_DEVICES environment variable
     # so that each worker can see all the GPUs
     # they will be able to set the device to the correct GPU
-    del os.environ["CUDA_VISIBLE_DEVICES"]
+    remove_visible_devices_env()
     device = torch.device(f"cuda:{rank}")
     torch.cuda.set_device(device)
     init_test_distributed_environment(tp_size, pp_size, rank,
@@ -44,7 +55,7 @@ def all_gather_test_worker(tp_size: int, pp_size: int, rank: int,
     # it is important to delete the CUDA_VISIBLE_DEVICES environment variable
     # so that each worker can see all the GPUs
     # they will be able to set the device to the correct GPU
-    del os.environ["CUDA_VISIBLE_DEVICES"]
+    remove_visible_devices_env()
     device = torch.device(f"cuda:{rank}")
     torch.cuda.set_device(device)
     init_test_distributed_environment(tp_size, pp_size, rank,
@@ -72,7 +83,7 @@ def broadcast_tensor_dict_test_worker(tp_size: int, pp_size: int, rank: int,
     # it is important to delete the CUDA_VISIBLE_DEVICES environment variable
     # so that each worker can see all the GPUs
     # they will be able to set the device to the correct GPU
-    del os.environ["CUDA_VISIBLE_DEVICES"]
+    remove_visible_devices_env()
     device = torch.device(f"cuda:{rank}")
     torch.cuda.set_device(device)
     init_test_distributed_environment(tp_size, pp_size, rank,
