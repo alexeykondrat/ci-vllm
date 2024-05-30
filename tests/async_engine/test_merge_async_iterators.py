@@ -33,7 +33,9 @@ async def test_merge_async_iterators():
 
     for iterator in iterators:
         try:
-            await asyncio.wait_for(anext(iterator), 1)
+            #temporary switching from builtin function anext(iterator)
+            #to direct call for backward compatibility with Python 3.9 on ROCm
+            await asyncio.wait_for(iterator.__anext__(), 1)
         except StopAsyncIteration:
             # All iterators should be cancelled and print this message.
             print("Iterator was cancelled normally")
